@@ -1,5 +1,7 @@
-import nats, { Message } from 'node-nats-streaming';
+import nats from 'node-nats-streaming';
 import { randomBytes } from 'crypto';
+
+import { TicketCreatedListener } from './events/tickets-created-listener';
 
 console.clear();
 
@@ -11,40 +13,12 @@ stan.on('connect', () => {
   console.log('Listener connected to NATS');
 
   stan.on('close', () => {
-    console.log('NATS connection closed');
+    console.log('NATS connection closed!');
     process.exit();
   });
 
-  const options = stan
-    .subscriptionOptions()
-    .setManualAckMode(true)
-    .setDeliverAllAvailable()
-    .setDurableName('accountings-service');
-
-  const subscription = stan.subscribe(
-    'ticket:created',
-    'queue-group-name',
-    options
-  );
-
-  subscription.on('message', (msg: Message) => {
-    const data = msg.getData();
-
-    console.log(`Received event #${msg.getSequence()} with data: ${data}`);
-
-    msg.ack();
-  });
+  new TicketCreatedListener(stan).listen();
 });
 
-process.on('SIGINT', () => {
-  console.log(
-    'Sending request to NATS streaming server to close the client using SIGINT'
-  );
-  stan.close();
-});
-process.on('SIGTERM', () => {
-  console.log(
-    'Sending request to NATS streaming server to close the client using SIGTERM'
-  );
-  stan.close();
-});
+process.on('SIGINT', () => stan.close());
+process.on('SIGTERM', () => stan.close());
