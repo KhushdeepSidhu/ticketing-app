@@ -1,12 +1,23 @@
 import mongoose from 'mongoose';
 import express, { Request, Response } from 'express';
-import { requireAuth, validateRequest } from '@khushdeeptickets/common';
+import {
+  requireAuth,
+  validateRequest,
+  NotFoundError,
+  OrderStatus,
+  BadRequestError,
+} from '@khushdeeptickets/common';
 import { body } from 'express-validator';
 import { natsWrapper } from '../nats-wrapper';
+
+import { Ticket } from '../models/ticket';
+import { Order } from '../models/order';
 
 // Middlewares
 
 const router = express.Router();
+
+const EXPIRATION_WINDOW_SECONDS = 15 * 60;
 
 router.post(
   '/api/orders',
@@ -19,7 +30,42 @@ router.post(
   ],
   validateRequest,
   async (req: Request, res: Response) => {
-    res.status(201).send({});
+    const { ticketId } = req.body;
+
+    // Find the ticket in the database which the user is trying to reserve.
+    const ticket = await Ticket.findById(ticketId);
+
+    // If the ticket is not found throw a not found error.
+    if (!ticket) {
+      throw new NotFoundError();
+    }
+
+    // Check if the ticket is already reserved
+    // if we already have an order in the database which is associated with
+    // the ticket, user is trying to reserve, and it doesn't have a status of
+    // cancelled then the ticket is already reserved and we throw a bad request
+    // error
+    const isReserved = await ticket.isReserved();
+
+    if (isReserved) {
+      throw new BadRequestError('Ticket is already reserved');
+    }
+
+    // Calculate an expiration date for this order
+    const expiration = new Date();
+    expiration.setSeconds(expiration.getSeconds() + EXPIRATION_WINDOW_SECONDS);
+
+    // Build an order and send it to the user
+    const order = Order.build({
+      userId: req.currentUser!.id,
+      status: OrderStatus.Created,
+      expiresAt: expiration,
+      ticket,
+    });
+
+    // Publish an order created event to NATS
+
+    res.status(201).send(order);
   }
 );
 
