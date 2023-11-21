@@ -1,5 +1,6 @@
 auth/node_modules
 client/node_modules
 tickets/node_modules
+orders/node_modules
 nats-test/node_modules
 client/.next
