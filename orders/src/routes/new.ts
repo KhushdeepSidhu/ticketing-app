@@ -12,6 +12,7 @@ import { natsWrapper } from '../nats-wrapper';
 
 import { Ticket } from '../models/ticket';
 import { Order } from '../models/order';
+import { OrderCreatedPublisher } from '../events/publishers/order-created-publisher';
 
 // Middlewares
 
@@ -66,6 +67,16 @@ router.post(
     await order.save();
 
     // Publish an order created event to NATS
+    new OrderCreatedPublisher(natsWrapper.client).publish({
+      id: order.id,
+      userId: order.userId,
+      status: OrderStatus.Created, // why we can't use order.status ??
+      expiresAt: order.expiresAt.toISOString(), // UTC time stamp
+      ticket: {
+        id: ticket.id,
+        price: ticket.price,
+      },
+    });
 
     res.status(201).send(order);
   }
