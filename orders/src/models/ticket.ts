@@ -46,12 +46,12 @@ ticketSchema.statics.build = (attrs: TicketAttrs) => {
 // Add a method to a Ticket Doc which represents a single ticket entry
 ticketSchema.methods.isReserved = async function () {
   const existingOrder = await Order.findOne({
-    ticket: this.ticket,
+    ticket: this,
     status: {
       $in: [
+        OrderStatus.Created,
         OrderStatus.AwaitingPayment,
         OrderStatus.Complete,
-        OrderStatus.Created,
       ],
     },
   });

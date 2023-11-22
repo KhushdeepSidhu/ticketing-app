@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { OrderStatus } from '@khushdeeptickets/common';
+// mongoose.set('debug', true);
 
 import { TicketDoc } from './ticket';
 

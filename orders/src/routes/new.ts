@@ -63,6 +63,8 @@ router.post(
       ticket,
     });
 
+    await order.save();
+
     // Publish an order created event to NATS
 
     res.status(201).send(order);
