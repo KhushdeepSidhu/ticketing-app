@@ -12,6 +12,7 @@ export class TicketCreatedListener extends Listener<TicketCreatedEvent> {
   queueGroupName = queueGroupName;
 
   async onMessage(data: TicketCreatedEvent['data'], msg: Message) {
+    console.log('Ticket created event is received in orders service.');
     const { id, title, price } = data;
 
     const ticket = Ticket.build({
@@ -21,5 +22,7 @@ export class TicketCreatedListener extends Listener<TicketCreatedEvent> {
     });
 
     await ticket.save();
+
+    msg.ack();
   }
 }
