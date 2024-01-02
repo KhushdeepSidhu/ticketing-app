@@ -69,6 +69,7 @@ router.post(
     // Publish an order created event to NATS
     new OrderCreatedPublisher(natsWrapper.client).publish({
       id: order.id,
+      version: order.version,
       userId: order.userId,
       status: OrderStatus.Created, // why we can't use order.status ??
       expiresAt: order.expiresAt.toISOString(), // UTC time stamp
