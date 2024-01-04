@@ -17,6 +17,7 @@ it('returns a 401 if the order is not associated to the user', async () => {
   const title = 'concert';
   const price = 20;
   const ticket = Ticket.build({
+    id: new mongoose.Types.ObjectId().toHexString(),
     title,
     price,
   });
@@ -46,6 +47,7 @@ it('returns the order if the order is found', async () => {
   const title = 'concert';
   const price = 20;
   const ticket = Ticket.build({
+    id: new mongoose.Types.ObjectId().toHexString(),
     title,
     price,
   });
